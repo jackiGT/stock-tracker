@@ -1,7 +1,7 @@
+# .gitignore
+
 eslint/
 node_modules/
-.gitignore
 backend/venv
-backend/requirements.txt
 backend/__pycache__
 backend/.env
