@@ -15,8 +15,9 @@ let ExampleKeywords = [
     'NNE'
 ];
 
-const resultsBox = document.querySelector('.result-box')
-const inputBox = document.getElementById("input-box")
+const searchForm = document.getElementById('search-form');
+const resultsBox = document.querySelector('.result-box');
+const inputBox = document.getElementById('input-box');
 
 inputBox.addEventListener('keyup', (e) => {
     let result = [];
@@ -33,7 +34,6 @@ inputBox.addEventListener('keyup', (e) => {
     }
 });
 
-
 function display(result){
     const ul = document.createElement('ul');
 
@@ -43,6 +43,8 @@ function display(result){
         li.addEventListener('click', (e) => {
             inputBox.value = stock;
             ul.remove();
+            searchForm.requestSubmit();
+
         });
         li.textContent = stock;
 

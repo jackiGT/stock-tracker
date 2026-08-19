@@ -38,7 +38,7 @@ footer {
     background-color: white;
     color: black;
     box-sizing: border-box;
-    padding: 10px 20px;
+    padding: 10px 15px;
     border-radius: 20px;
     width: 50%;
     margin-top: 20px;
@@ -60,11 +60,21 @@ footer {
 }
 
 .search-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: transparent;
+    height: 40px;
+    width: 40px;
     border: 0;
     outline: 0;
     cursor: pointer;
     size: 20px;
+}
+
+.search-button:hover {
+    background-color: #999;
+    border-radius: 100%;
 }
 
 .result-box {
