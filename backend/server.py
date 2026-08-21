@@ -1,4 +1,5 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 import httpx
 import os
 import websockets
@@ -6,17 +7,6 @@ import json
 from websockets.asyncio.client import connect
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
-api_key = os.getenv("API_KEY")
-
-app = FastAPI()
-
-@app.get("/")
-def root():
-    return {"Hello": "World"}
-
 
 # Pydantic Schema Models
 class QuoteResponse(BaseModel):
@@ -48,6 +38,29 @@ class TradeInfo(BaseModel):
 class Trade(BaseModel):
     data: list[TradeInfo]
     type: str
+    
+
+# Load environment variables
+load_dotenv()
+api_key = os.getenv("API_KEY")
+
+app = FastAPI()
+
+origins = [
+    "http://localhost:3000"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/")
+def root():
+    return {"Hello": "World"}
 
 
 # Finnhub Endpoints
@@ -86,11 +99,15 @@ async def fetch_stock_list():
 
 # Websocket Connection (Finnhub Trades)
 
+# List of browser to server active connections 
+active_connections: list[WebSocket] = []
+
 # Server to Client (browser frontend)
 @app.websocket("/ws/trades")
 async def websocket_trades(websocket: WebSocket):
     # Server agrees to browser, handshake completes
     await websocket.accept()
+    active_connections.append(websocket)
 
     try:
         while True:
@@ -98,18 +115,24 @@ async def websocket_trades(websocket: WebSocket):
             print(data)
             
     except WebSocketDisconnect:
-        pass
-
+        active_connections.remove(websocket)
 
 # Client to Server API (Finnhub)
 async def finnhub_websocket(subscribe_msg: SubscribeMsg):
 
+    # Connect with API websocket server
     async with connect(f"wss://ws.finnhub.io?token={api_key}") as ws:
         await ws.send(subscribe_msg.model_dump_json())
 
         try:
+            # Constant stream of raw data from server to client
             async for raw in ws:
                 data = json.loads(raw)
+                
+                # json data sent from api to each connection
+                for connection in active_connections:
+                    await connection.send_json(data)
+
                 print(data["type"])
 
         except websockets.exceptions.ConnectionClosed:
